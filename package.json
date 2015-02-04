@@ -1,0 +1,30 @@
+{
+  "name": "generator-z-dist-implementer",
+  "version": "0.1.0",
+  "description": "A small php script that set's up server-specific configuration files based on template (*.dist) files. Inspired by the Symfony2 Framework's parameters.yml.dist file.",
+  "license": "MIT",
+  "main": "app/index.js",
+  "repository": "ZeeCoder/generator-z-dist-implementer",
+  "author": {
+    "name": "Hubert Viktor",
+    "email": "rpgmorpheus@gmail.com",
+    "url": "https://github.com/ZeeCoder"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "files": [
+    "app"
+  ],
+  "keywords": [
+    "yeoman-generator"
+  ],
+  "dependencies": {
+    "yeoman-generator": "^0.18.0",
+    "chalk": "^0.5.0",
+    "yosay": "^0.3.0"
+  },
+  "peerDependencies": {
+    "yo": ">=1.0.0"
+  }
+}
