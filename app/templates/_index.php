@@ -127,7 +127,7 @@ if (!empty($_POST['deleteFilePath'])) {
                             </div>
                         </div>
                         <div class="row text-center">
-                            <div class="column small-12"></div>
+                            <div class="column small-12">
                                 <?php if ($implementationMissing): ?>
                                     <button type="submit" class="button radius no-margin">Implement file</button>
                                 <?php else: ?>
