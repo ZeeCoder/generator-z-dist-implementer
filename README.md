@@ -27,3 +27,7 @@ run `npm install generator-z-dist-implementer -g`
 
 After that, you can run `yo z-dist-implementer` from a project to start the
 generator.
+
+
+#### TODO
+- make it work with a capifony deployment process
