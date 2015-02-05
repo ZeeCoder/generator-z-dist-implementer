@@ -1,10 +1,12 @@
 <?php
 
-// List here the relative paths of the dist files.
 return array(
+    // List here the relative paths of the dist files.
     'distFiles' => array(
         'example.yaml.dist',
         'example.html.dist',
     ),
-    'sessionKey' => 'dist-implementor-login', // The session key where the login session will be stored
+    // The session key where the login session will be stored
+    'sessionKey' => 'dist-implementor-login',
+    'password' => 'apple'
 );
