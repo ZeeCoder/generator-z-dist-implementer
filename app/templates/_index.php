@@ -9,6 +9,15 @@ if (!empty($_SESSION[$config['sessionKey']])) {
 }
 
 if ($loggedIn) {
+    // Check wheter all the files are implemented or not
+    $implementedFileCount = 0;
+    foreach ($config['distFiles'] as $filePath) {
+        if (file_exists(str_replace('.dist', '', $filePath))) {
+            $implementedFileCount++;
+        }
+    }
+    $isAllImplemented = $implementedFileCount === count($config['distFiles']);
+
     if (!empty($_POST['implementFile'])) {
         foreach ($_POST['implementFile'] as $filePath => $content) {
             $implementedFilePath = str_replace('.dist', '', $filePath);
@@ -72,6 +81,9 @@ session_write_close();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.0/css/foundation.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css" rel="stylesheet">
     <style>
+        body {
+            padding: 0 20px;
+        }
         textarea {
             margin: .5em 0;
             resize: none;
@@ -114,6 +126,10 @@ session_write_close();
         .change-btn {
             display: none;
         }
+
+        .full-row {
+            max-width: initial !important;
+        }
     </style>
 </head>
 <body>
@@ -142,101 +158,100 @@ session_write_close();
 
     <?php else: ?>
 
+        <br><br>
+        <h3 class="text-center">Implementing *.dist files</h3>
+        <br>
         <div class="row">
             <div class="column small-12">
-                <br><br>
-                <h3 class="text-center">Implementing *.dist files</h3>
-                <div class="row">
-                    <div class="column small-12">
-                        <a href="?logout" class="button tiny right">Logout</a>
-                    </div>
-                </div>
-                <div class="panel">
-                    <p>
-                        Here you can implement the *.dist files - listed in the "config.php" file - . Every dist file will
-                        be implemented with the same name, only without the ".dist" suffix. So for example in case of a
-                        Symfony2 "parameters.yml.dist" file, the new file will be called "parameters.yml".
-                    </p>
-                    <p>
-                        <b>Important!</b> <br>
-                        This script should only be used after the very first deplyoment, to create server-specific
-                        configurations based on the *dist template files.<br>
-                        After you are done implementing the dist files, remove the folder containing this script altogether.
-                    </p>
-                </div>
-                <?php foreach ($config['distFiles'] as $filePath): ?>
-                    <?php
-                        if (!file_exists($filePath)) { continue; }
-                        $implementationMissing = !is_file(str_replace('.dist', '', $filePath));
-                    ?>
-                    <form action="" method="post">
-                        <fieldset class="panel">
-                            <legend>
-                                <h4>
-                                <?php echo $filePath ?>
-                                <?php if ($implementationMissing): ?>
-                                    - <span class="label alert">missing</span>
-                                <?php else: ?>
-                                    - <span class="label success">implemented</span>
-                                <?php endif; ?>
-                                </h4>
-                            </legend>
-                            <div class="row">
-                                <div class="column small-6">
-                                    <h5 class="text-center"><?php echo basename($filePath) ?></h5>
-                                </div>
-                                <div class="column small-6">
-                                    <h5 class="text-center">
-                                        <?php echo basename($filePath, '.dist') ?>
-                                        <?php if (!$implementationMissing): ?>
-                                            - <a class="label switch-on-edit-mode">Edit</a>
-                                        <?php endif ?>
-                                    </h5>
-                                </div>
-                            </div>
-                            <div class="row pair-wrap" data-equalizer>
-                                <div class="column small-6" data-equalizer-watch>
-                                    <pre class="language-markup"><code><?php echo htmlspecialchars(file_get_contents($filePath)) ?></code></pre>
-                                </div>
-                                <div class="column small-6 implementation-mode implementation-mode_<?php echo $implementationMissing ? 'edit': 'show' ?>" data-equalizer-watch>
-                                    <textarea name="implementFile[<?php echo $filePath ?>]" rows="15"><?php
-                                        if ($implementationMissing) {
-                                            echo file_get_contents($filePath);
-                                        } else {
-                                            echo file_get_contents(str_replace('.dist', '', $filePath));
-                                        }
-                                    ?></textarea>
-                                    <?php if (!$implementationMissing): ?>
-                                        <pre class="language-markup"><code><?php echo htmlspecialchars(file_get_contents(str_replace('.dist', '', $filePath))) ?></code></pre>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="column small-3 hide-for-small"><br></div>
-                                <div class="column small-6 text-center">
-                                    <?php if ($implementationMissing): ?>
-                                        <button type="submit" class="button radius no-margin">Implement file</button>
-                                    <?php else: ?>
-                                        <button type="submit" class="change-btn button radius no-margin">Change file</button>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="column small-6 medium-3">
-                                    <?php if (!$implementationMissing): ?>
-                                        <a href="?deleteFilePath=<?php echo urlencode($filePath) ?>" class="delete-implementation button alert tiny right">Delete implemented file</a>
-                                    <?php endif ?>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </form>
-                <?php endforeach ?>
-
-                <br>
-                <form action="" method="post" class="text-center">
-                    <button class="button alert" type="submit" name="uninstall" value="1">Uninstall this script</button>
+                <form action="" method="post" class="text-center left">
+                    <button class="button tiny alert" type="submit" name="uninstall" value="1">Uninstall this script</button>
                 </form>
-
+                <a href="?logout" class="button tiny right">Logout</a>
             </div>
         </div>
+        <div class="panel">
+            <p>
+                Here you can implement the *.dist files - listed in the "config.php" file - . Every dist file will
+                be implemented with the same name, only without the ".dist" suffix. So for example in case of a
+                Symfony2 "parameters.yml.dist" file, the new file will be called "parameters.yml".
+            </p>
+            <p>
+                <b>Important!</b> <br>
+                This script should only be used after the very first deplyoment, to create server-specific
+                configurations based on the *dist template files.<br>
+                After you are done implementing the dist files, remove the folder containing this script altogether.
+            </p>
+        </div>
+        <?php if ($isAllImplemented): ?>
+            <div class="alert-box success radius">
+                Every dist file is implemented.
+            </div>
+        <?php endif; ?>
+        <?php foreach ($config['distFiles'] as $filePath): ?>
+            <?php
+                if (!file_exists($filePath)) { continue; }
+                $implementationMissing = !is_file(str_replace('.dist', '', $filePath));
+            ?>
+            <form action="" method="post">
+                <fieldset class="panel">
+                    <legend>
+                        <h4>
+                        <?php echo $filePath ?>
+                        <?php if ($implementationMissing): ?>
+                            - <span class="label alert">missing</span>
+                        <?php else: ?>
+                            - <span class="label success">implemented</span>
+                        <?php endif; ?>
+                        </h4>
+                    </legend>
+                    <div class="row">
+                        <div class="column small-6">
+                            <h5 class="text-center"><?php echo basename($filePath) ?></h5>
+                        </div>
+                        <div class="column small-6">
+                            <h5 class="text-center">
+                                <?php echo basename($filePath, '.dist') ?>
+                                <?php if (!$implementationMissing): ?>
+                                    - <a class="label switch-on-edit-mode">Edit</a>
+                                <?php endif ?>
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="row pair-wrap full-row" data-equalizer>
+                        <div class="column small-6" data-equalizer-watch>
+                            <pre class="language-markup"><code><?php echo htmlspecialchars(file_get_contents($filePath)) ?></code></pre>
+                        </div>
+                        <div class="column small-6 implementation-mode implementation-mode_<?php echo $implementationMissing ? 'edit': 'show' ?>" data-equalizer-watch>
+                            <textarea name="implementFile[<?php echo $filePath ?>]" rows="15"><?php
+                                if ($implementationMissing) {
+                                    echo file_get_contents($filePath);
+                                } else {
+                                    echo file_get_contents(str_replace('.dist', '', $filePath));
+                                }
+                            ?></textarea>
+                            <?php if (!$implementationMissing): ?>
+                                <pre class="language-markup"><code><?php echo htmlspecialchars(file_get_contents(str_replace('.dist', '', $filePath))) ?></code></pre>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="column small-3 hide-for-small"><br></div>
+                        <div class="column small-6 text-center">
+                            <?php if ($implementationMissing): ?>
+                                <button type="submit" class="button radius no-margin">Implement file</button>
+                            <?php else: ?>
+                                <button type="submit" class="change-btn button radius no-margin">Change file</button>
+                            <?php endif; ?>
+                        </div>
+                        <div class="column small-6 medium-3">
+                            <?php if (!$implementationMissing): ?>
+                                <a href="?deleteFilePath=<?php echo urlencode($filePath) ?>" class="delete-implementation button alert tiny right">Delete implemented file</a>
+                            <?php endif ?>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        <?php endforeach ?>
 
         <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js"></script>
