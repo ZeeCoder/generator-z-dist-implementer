@@ -1,5 +1,6 @@
 <?php
 
+session_start();
 $config = include 'config.php';
 
 $loggedIn = false;
@@ -41,7 +42,25 @@ if ($loggedIn) {
         echo 'You succesfully removed the *-dist implementation script with all it\'s files.';
         exit;
     }
+
+    if (isset($_GET['logout'])) {
+        unset($_SESSION[$config['sessionKey']]);
+
+        header('location: ' . str_replace(basename(__FILE__), '', $_SERVER['PHP_SELF']));
+        exit;
+    }
+} else {
+    if (
+        !empty($_POST['login']) &&
+        $_POST['login']['password'] === $config['password']
+    ) {
+        $_SESSION[$config['sessionKey']] = true;
+
+        header('location: ' . str_replace(basename(__FILE__), '', $_SERVER['PHP_SELF']));
+        exit;
+    }
 }
+session_write_close();
 
 ?>
 
@@ -101,19 +120,24 @@ if ($loggedIn) {
 
     <?php if (!$loggedIn): ?>
 
+        <br><br><br><br>
         <div class="row">
-            <div class="column small-4"><br></div>
-            <div class="column small-8">
+            <div class="column small-3"><br></div>
+            <div class="column small-6">
                 <form action="" method="post">
                     <div class="row">
                         <div class="column small-12">
                             <input type="password" name="login[password]">
                         </div>
                     </div>
-                    <button type="submit">Login</button>
+                    <div class="row">
+                        <div class="column small-12 text-center">
+                            <button type="submit" class="button small">Login</button>
+                        </div>
+                    </div>
                 </form>
             </div>
-            <div class="column small-4"><br></div>
+            <div class="column small-3"><br></div>
         </div>
 
     <?php else: ?>
@@ -122,7 +146,11 @@ if ($loggedIn) {
             <div class="column small-12">
                 <br><br>
                 <h3 class="text-center">Implementing *.dist files</h3>
-                <br>
+                <div class="row">
+                    <div class="column small-12">
+                        <a href="?logout" class="button tiny right">Logout</a>
+                    </div>
+                </div>
                 <div class="panel">
                     <p>
                         Here you can implement the *.dist files - listed in the "config.php" file - . Every dist file will
@@ -136,7 +164,7 @@ if ($loggedIn) {
                         After you are done implementing the dist files, remove the folder containing this script altogether.
                     </p>
                 </div>
-                <?php foreach ($distFiles as $filePath): ?>
+                <?php foreach ($config['distFiles'] as $filePath): ?>
                     <?php
                         if (!file_exists($filePath)) { continue; }
                         $implementationMissing = !is_file(str_replace('.dist', '', $filePath));
@@ -201,6 +229,11 @@ if ($loggedIn) {
                         </fieldset>
                     </form>
                 <?php endforeach ?>
+
+                <br>
+                <form action="" method="post" class="text-center">
+                    <button class="button alert" type="submit" name="uninstall" value="1">Uninstall this script</button>
+                </form>
 
             </div>
         </div>
