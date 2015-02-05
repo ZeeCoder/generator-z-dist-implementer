@@ -13,6 +13,9 @@
   "engines": {
     "node": ">=0.10.0"
   },
+  "files": [
+    "app"
+  ],
   "keywords": [
     "yeoman-generator"
   ],
