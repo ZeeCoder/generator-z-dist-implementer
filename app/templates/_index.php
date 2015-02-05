@@ -5,9 +5,6 @@ $distFiles = include 'config.php';
 if (!empty($_POST['implementFile'])) {
     foreach ($_POST['implementFile'] as $filePath => $content) {
         $implementedFilePath = str_replace('.dist', '', $filePath);
-        if (is_file($implementedFilePath)) {
-            continue;
-        }
 
         file_put_contents($implementedFilePath, $content) ? 't': 'f';
     }
@@ -16,8 +13,8 @@ if (!empty($_POST['implementFile'])) {
     exit;
 }
 
-if (!empty($_POST['deleteFilePath'])) {
-    $implementedFilePath = str_replace('.dist', '', $_POST['deleteFilePath']);
+if (!empty($_GET['deleteFilePath'])) {
+    $implementedFilePath = str_replace('.dist', '', urldecode($_GET['deleteFilePath']));
 
     if (is_file($implementedFilePath)) {
         unlink($implementedFilePath);
@@ -27,13 +24,25 @@ if (!empty($_POST['deleteFilePath'])) {
     exit;
 }
 
+if (isset($_POST['uninstall'])) {
+    $files = glob('*');
+    foreach ($files as $filePath) {
+        unlink($filePath);
+    }
+
+    rmdir(dirname(__FILE__));
+
+    echo 'You succesfully removed the *-dist implementation script with all it\'s files.';
+    exit;
+}
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Setup</title>
+    <title>Implementing *.dist files</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.0/css/foundation.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css" rel="stylesheet">
     <style>
@@ -67,6 +76,18 @@ if (!empty($_POST['deleteFilePath'])) {
         .label {
             vertical-align: middle;
         }
+
+        .implementation-mode_edit pre {
+            display: none;
+        }
+
+        .implementation-mode_show textarea {
+            display: none;
+        }
+
+        .change-btn {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -90,11 +111,11 @@ if (!empty($_POST['deleteFilePath'])) {
                 </p>
             </div>
             <?php foreach ($distFiles as $filePath): ?>
+                <?php
+                    if (!file_exists($filePath)) { continue; }
+                    $implementationMissing = !is_file(str_replace('.dist', '', $filePath));
+                ?>
                 <form action="" method="post">
-                    <?php
-                        if (!file_exists($filePath)) { continue; }
-                        $implementationMissing = !is_file(str_replace('.dist', '', $filePath));
-                    ?>
                     <fieldset class="panel">
                         <legend>
                             <h4>
@@ -111,29 +132,44 @@ if (!empty($_POST['deleteFilePath'])) {
                                 <h5 class="text-center"><?php echo basename($filePath) ?></h5>
                             </div>
                             <div class="column small-6">
-                                <h5 class="text-center"><?php echo basename($filePath, '.dist') ?></h5>
+                                <h5 class="text-center">
+                                    <?php echo basename($filePath, '.dist') ?>
+                                    <?php if (!$implementationMissing): ?>
+                                        - <a class="label switch-on-edit-mode">Edit</a>
+                                    <?php endif ?>
+                                </h5>
                             </div>
                         </div>
                         <div class="row pair-wrap" data-equalizer>
                             <div class="column small-6" data-equalizer-watch>
                                 <pre class="language-markup"><code><?php echo htmlspecialchars(file_get_contents($filePath)) ?></code></pre>
                             </div>
-                            <div class="column small-6" data-equalizer-watch>
-                                <?php if ($implementationMissing): ?>
-                                    <textarea name="implementFile[<?php echo $filePath ?>]" rows="15"><?php echo file_get_contents($filePath) ?></textarea>
-                                <?php else: ?>
+                            <div class="column small-6 implementation-mode implementation-mode_<?php echo $implementationMissing ? 'edit': 'show' ?>" data-equalizer-watch>
+                                <textarea name="implementFile[<?php echo $filePath ?>]" rows="15"><?php
+                                    if ($implementationMissing) {
+                                        echo file_get_contents($filePath);
+                                    } else {
+                                        echo file_get_contents(str_replace('.dist', '', $filePath));
+                                    }
+                                ?></textarea>
+                                <?php if (!$implementationMissing): ?>
                                     <pre class="language-markup"><code><?php echo htmlspecialchars(file_get_contents(str_replace('.dist', '', $filePath))) ?></code></pre>
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <div class="row text-center">
-                            <div class="column small-12">
+                        <div class="row">
+                            <div class="column small-3 hide-for-small"><br></div>
+                            <div class="column small-6 text-center">
                                 <?php if ($implementationMissing): ?>
                                     <button type="submit" class="button radius no-margin">Implement file</button>
                                 <?php else: ?>
-                                    <input type="hidden" name="deleteFilePath" value="<?php echo $filePath ?>">
-                                    <button type="submit" class="button alert radius no-margin">Delete file</button>
+                                    <button type="submit" class="change-btn button radius no-margin">Change file</button>
                                 <?php endif; ?>
+                            </div>
+                            <div class="column small-6 medium-3">
+                                <?php if (!$implementationMissing): ?>
+                                    <a href="?deleteFilePath=<?php echo urlencode($filePath) ?>" class="delete-implementation button alert tiny right">Delete implemented file</a>
+                                <?php endif ?>
                             </div>
                         </div>
                     </fieldset>
@@ -142,10 +178,40 @@ if (!empty($_POST['deleteFilePath'])) {
 
         </div>
     </div>
-    
+
     <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.0/js/foundation.min.js"></script>
     <script> $(document).foundation(); </script>
+    <script>
+        $('.switch-on-edit-mode').on('click', function(){
+            var $panel = $(this).closest('.panel');
+            var $label = $panel.find('.switch-on-edit-mode');
+            var $implementationMode = $panel.find('.implementation-mode');
+            var $changeBtn = $panel.find('.change-btn');
+
+            var editMode = $panel.data('editMode');
+
+            if (!editMode) {
+                $label.text('x');
+                $changeBtn.show();
+                $implementationMode.removeClass('implementation-mode_show');
+                $implementationMode.addClass('implementation-mode_edit');
+            } else {
+                $label.text('Edit');
+                $changeBtn.hide();
+                $implementationMode.removeClass('implementation-mode_edit');
+                $implementationMode.addClass('implementation-mode_show');
+            }
+
+            $panel.data('editMode', !editMode);
+        });
+
+        $('.delete-implementation').on('click', function(e){
+            if (!confirm('Are you sure you want to delete this implementation?')) {
+                e.preventDefault();
+            }
+        });
+    </script>
 </body>
 </html>
