@@ -1,6 +1,7 @@
 
 ### Generator-Z-Dist-Implementer
 
+[![Project Status](http://stillmaintained.com/ZeeCoder/generator-z-dist-implementer.png)](http://stillmaintained.com/ZeeCoder/generator-z-dist-implementer)
 
 #### Description
 
